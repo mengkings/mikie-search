@@ -158,16 +158,16 @@ def ask():
     mode = d.get("mode") or "quick"
     history = d.get("history") or []
     if not q: return jsonify({"error": "empty query"}), 400
+    n = 8 if mode == "deep" else 6
+    sources = search_web(q, n)
     queries = [q]
-    if re.search(r"[一-鿿]", q):
+    if len(sources) < 5 and re.search(r"[一-鿿]", q):
         try:
             en = llm([{"role": "user", "content": "Translate this Chinese search question into a concise English web search query. Output only the query:\n" + q}])
             en = en.strip().strip('"')[:120]
             if en and not re.search(r"[一-鿿]", en): queries.append(en)
         except Exception:
             pass
-    n = 8 if mode == "deep" else 6
-    sources = search_web(queries[0], n)
     if len(queries) > 1:
         extra = search_web(queries[1], n)
         seen = {s["url"] for s in sources}
